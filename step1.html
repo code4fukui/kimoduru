@@ -1,0 +1,98 @@
+<script type="module">
+import { THREE, scene, camera, renderer } from "https://code4fukui.github.io/egxr.js/egxr.js";
+
+// renderer.shadowMap.enabled = true; // シャドウマップを有効化
+
+// ジオメトリ作成（四角形＝2枚の三角形）
+const geometry = new THREE.BufferGeometry();
+const vertices = new Float32Array([
+  -1.0, -1.0, 0.0,  // 頂点0 (左下)
+   1.0, -1.0, 0.0,  // 頂点1 (右下)
+   1.0,  1.0, 0.0,  // 頂点2 (右上)
+  -1.0,  1.0, 0.0,  // 頂点3 (左上)
+]);
+
+const indices = [
+  0, 1, 2, // 三角形1
+  2, 3, 0  // 三角形2
+];
+
+geometry.setIndex(indices);
+geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+
+const color = 0xff9000;
+const wireframe = false;
+
+/*
+const material = new THREE.MeshBasicMaterial({
+  color,
+  wireframe: false,
+  side: THREE.DoubleSide,
+});
+*/
+
+const material = new THREE.MeshStandardMaterial({
+  color,
+  wireframe,
+  side: THREE.DoubleSide,
+});
+
+/*
+const material = new THREE.MeshLambertMaterial({
+  color,
+  side: THREE.DoubleSide,
+});
+*/
+/*
+// 【重要】折り目を目立たせる Toon マテリアル
+const material = new THREE.MeshToonMaterial({
+  color, // 赤色
+  gradientMap: null, // デフォルト（滑らかなトゥーン）
+  side: THREE.DoubleSide
+});
+*/
+/*
+// 折り目が目立つPhongシェーディング
+const material = new THREE.MeshPhongMaterial({
+  color,
+  shininess: 200, // 光沢を強めにして折り目のハイライトを出す
+  specular: 0xffffff, // 反射を強く
+  side: THREE.DoubleSide
+});
+*/
+
+const mesh = new THREE.Mesh(geometry, material);
+mesh.castShadow = true; // 影を落とす
+mesh.receiveShadow = true; // 影を受ける
+
+scene.add(mesh);
+
+let t = 0;
+renderer.setAnimationLoop(() => {
+  t += 0.01;
+  const position = geometry.attributes.position;
+
+  const t2 = ((1 + Math.sin(t - Math.PI / 2)) * 0.5) * 0.99; // 0〜1 の範囲で変化
+
+  const tran = (p0, p1, t) => {
+    return p0 + (p1 - p0) * t;
+  }; 
+
+  const x = tran(-1.0, 1.0, t2);
+  const y = tran(1.0, -1.0, t2);
+  const z = Math.sin(t2 * Math.PI);
+
+  position.setXYZ(3, x, y, z);
+  geometry.computeVertexNormals(); // 法線を計算して陰影を正しく表示
+  position.needsUpdate = true;
+
+  renderer.render(scene, camera);
+
+	mesh.position.z = -2.2;
+	mesh.rotation.y += .001;
+	//mesh.rotation.y = Math.PI / 4;
+	//mesh.rotation.y = Math.PI / 2;
+	//mesh.rotation.y = 0;
+	renderer.render(scene, camera);
+});
+</script>
